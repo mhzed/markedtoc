@@ -6,6 +6,10 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "bin": {
+    "mtoc": "./bin/markedtoc.js",
+    "mtocview": "./bin/markedtocpreview.js"
+  },
   "keywords": [
     "marked",
     "down",
@@ -16,6 +20,8 @@
   "author": "minhongz@gmail.com",
   "license": "ISC",
   "dependencies": {
-    "marked": "^0.3.2"
+    "open": "0.0.5",
+    "node-watch": "0.3.4",
+    "marked": "0.3.2"
   }
 }
