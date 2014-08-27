@@ -1,0 +1,21 @@
+{
+  "name": "markedtoc",
+  "version": "0.1.0",
+  "description": "Marked down parser with table of content support",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "marked",
+    "down",
+    "parser",
+    "html",
+    "toc"
+  ],
+  "author": "minhongz@gmail.com",
+  "license": "ISC",
+  "dependencies": {
+    "marked": "^0.3.2"
+  }
+}
