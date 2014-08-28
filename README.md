@@ -3,8 +3,9 @@
 Based on https://github.com/chjj/marked,  but add support for table of content, and real-time preview via 
 browser.
 
-Table of content is generated from the headings that follow the TOC marker.  See [here](README.md.html) for 
-example.
+Table of content is generated from the headings that follow the TOC marker.  See 
+[README.md.html](http://htmlpreview.github.io/?https://github.com/mhzed/markedtoc/blob/master/README.md.html) 
+for example.
  
 [TOC.]
 
@@ -19,7 +20,7 @@ Then run command:
 
 # Usage
 
-The library usage is exactly same as that of [marked](https://github.com/chjj/marked).
+The library usage is exactly the same as that of [marked](https://github.com/chjj/marked).
 
 To use the TOC support, do the following:
 
