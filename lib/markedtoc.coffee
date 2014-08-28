@@ -18,7 +18,7 @@ do ->
     if ordered=='toc'
       "<ul id='toc'>#{body}</ul>"
     else
-      type =  ordered ? 'ol' : 'ul'
+      type =  if ordered then 'ol' else 'ul'
       '<' + type + '>\n' + body + '</' + type + '>\n';
   marked.setOptions({
     renderer : renderer
