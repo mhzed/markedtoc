@@ -1,13 +1,13 @@
 {
   "name": "markedtoc",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Marked down parser with table of content support",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": {
-    "mtoc": "./bin/markedtoc.js",
+    "mtoc": "./bin/markedtoc.js"
   },
   "keywords": [
     "marked",
@@ -21,6 +21,7 @@
   "dependencies": {
     "open": "0.0.5",
     "node-watch": "0.3.4",
-    "marked": "0.3.2"
+    "marked": "0.3.2",
+    "optimist": "0.3.5"
   }
 }
