@@ -8,7 +8,6 @@
   },
   "bin": {
     "mtoc": "./bin/markedtoc.js",
-    "mtocview": "./bin/markedtocpreview.js"
   },
   "keywords": [
     "marked",

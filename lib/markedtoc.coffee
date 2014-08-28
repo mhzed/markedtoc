@@ -1,21 +1,36 @@
 marked = require('marked')
 
+module.exports = marked
+
 # override lexer to do toc
-oldLexer = marked.lexer
+do ->
+  oldLexer = marked.lexer
+  newLexer = (data, options)->
+    toks = oldLexer(data, options)
+    return replaceToc(toks)
+  marked.Lexer.lex = newLexer
+  marked.lexer = newLexer
 
-newLexer = (data, options)->
-  toks = oldLexer(data, options)
-  return replaceToc(toks)
-
-marked.Lexer.lex = newLexer
-marked.lexer = newLexer
+# override renderer to set id toc for toc list
+do ->
+  renderer = new marked.Renderer();
+  renderer.list = (body, ordered) ->
+    if ordered=='toc'
+      "<ul id='toc'>#{body}</ul>"
+    else
+      type =  ordered ? 'ol' : 'ul'
+      '<' + type + '>\n' + body + '</' + type + '>\n';
+  marked.setOptions({
+    renderer : renderer
+  })
 
 ###
   tokens: returned by marked.Lexer.lex()
-  returns:  tokens with TOC filled in
+  returns:  iToc -> index of [TOC] paragraph, undefined if not found
+            addSection -> [TOC.] detected, prefix heading with numeric section numbers
 ###
-replaceToc = (tokens)->
-  
+findToc = (tokens) ->
+
   testTOC = (token) ->
     if token.type == "paragraph"
       m = /^\[toc(.*)\]$/i.exec(token.text)
@@ -33,7 +48,15 @@ replaceToc = (tokens)->
       addSection = (tocParam == ".")
       break
 
+  [iToc, addSection]
 
+###
+tokens: returned by marked.Lexer.lex()
+returns:  tokens with [TOC] paragraph replaced and filled in with toc lists
+###
+replaceToc = (tokens)->
+
+  [iToc, addSection] = findToc(tokens)
   if (iToc == undefined)
     return tokens;
 
@@ -63,12 +86,10 @@ replaceToc = (tokens)->
     root = root[0]
 
   # console.log(require("util").inspect(root, { showHidden: true, depth: 10 }));
-
   makeToc = (stack, toc, levelStacks) ->
     toc.push({
       type: 'list_start',
-      ordered: false,
-      isToc : true
+      ordered: 'toc'
     })
 
     x = 0
@@ -109,6 +130,3 @@ replaceToc = (tokens)->
   # replace [TOC] with a list of toc tokens
   tokens.splice.apply(tokens, [iToc, 1].concat(tocTokens));
   return tokens
-
-
-module.exports = marked
