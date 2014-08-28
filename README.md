@@ -3,7 +3,19 @@
 Based on https://github.com/chjj/marked,  but add support for table of content, and real-time preview via 
 browser.
 
-Table of content is generated form the headings. 
+Table of content is generated from the headings that follow the TOC marker.  See [here](README.md.html) for 
+example.
+ 
+[TOC.]
+
+# Installation
+
+Install [nodejs](http://nodejs.org)
+
+Then run command:
+
+    npm install -g markedtoc
+
 
 # Usage
 
@@ -14,7 +26,8 @@ To use the TOC support, do the following:
 - Insert paragraph "[TOC]" in the markdown file to generate table of content in the html output.
 - Insert paragraph "[TOC.]" in the markdown file to generate table of content with numbered prefix.
 
-# Command line
+
+## Command line
 
 To generate clean html (without <html> tag and styles) to stdout:
 
