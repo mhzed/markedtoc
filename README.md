@@ -49,4 +49,7 @@ To preview file in browser, and save a copy of preview html every time 'file.md'
 
     mtoc -v -s file.md
 
+To preview in browser using W3C working-draft style:
 
+    mtoc -v file.md --css http://www.w3.org/StyleSheets/TR/W3C-WD.css
+    

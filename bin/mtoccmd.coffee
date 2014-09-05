@@ -16,10 +16,12 @@ Example:
   .boolean("s")
   .boolean("v")
   .string('p')
+  .string("css")
   .default('p', '3333')
   .describe('s', 'Save a copy of preview html file')
   .describe('v', 'Preview markdown as html in browser, in realtime')
   .describe("p", 'The port to listen on when in preview mode')
+  .describe("css", "The optional url of css to use for html preview")
 ;
 
 fs = require("fs")
@@ -33,6 +35,9 @@ if (o.argv._.length != 1)
   process.exit 0
 
 outFile = mdFile + ".html"
+
+if o.argv.css
+  preview.css = o.argv.css
 
 if o.argv.v # preview
   preview.startServer(mdFile, parseInt(o.argv.p), outFile if o.argv.s)

@@ -12,6 +12,7 @@ module.exports = {
   startServer: (filename, port, saveOnChangeFile) ->
 
     server.saveOnChangeFile = saveOnChangeFile
+    server.css = module.exports.css
 
     check(filename)
     .accept(['md', 'markdown'])
@@ -37,6 +38,8 @@ module.exports = {
     fs.writeFileSync(outFile, template.render({
       title: path.basename(inFile),
       body: parser.parse(fs.readFileSync(inFile, 'utf-8'))
-    }, 'default', true))
+    }, module.exports.css, true))
 
+  # could be a full url
+  css : 'default'
 }

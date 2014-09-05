@@ -5,7 +5,6 @@
 <title>README.md</title>
 <style>
 
-
 h1,
 h2,
 h3,
@@ -165,8 +164,9 @@ ul#toc {
 <h1 id="markedtoc">markedtoc</h1>
 <p>Based on <a href="https://github.com/chjj/marked">https://github.com/chjj/marked</a>,  but add support for table of content, and real-time preview via 
 browser.</p>
-<p>Table of content is generated from the headings that follow the TOC marker.  See <a href="README.md.html">README.md.html</a> for 
-example.</p>
+<p>Table of content is generated from the headings that follow the TOC marker.  See 
+<a href="http://htmlpreview.github.io/?https://github.com/mhzed/markedtoc/blob/master/README.md.html">README.md.html</a> 
+for example.</p>
 <ul id='toc'><li><a href="#1-installation">1 Installation</a></li>
 <li><a href="#2-usage">2 Usage</a><ul id='toc'><li><a href="#2-1-command-line">2.1 Command line</a></li>
 </ul></li>
@@ -177,10 +177,10 @@ example.</p>
 </code></pre><h1 id="2-usage">2 Usage</h1>
 <p>The library usage is exactly the same as that of <a href="https://github.com/chjj/marked">marked</a>.</p>
 <p>To use the TOC support, do the following:</p>
-<false>
+<ul>
 <li>Insert paragraph &quot;[TOC]&quot; in the markdown file to generate table of content in the html output.</li>
 <li>Insert paragraph &quot;[TOC.]&quot; in the markdown file to generate table of content with numbered prefix.</li>
-</false>
+</ul>
 <h2 id="2-1-command-line">2.1 Command line</h2>
 <p>To generate clean html (without <html> tag and styles) to stdout:</p>
 <pre><code>mtoc file.md
@@ -193,6 +193,8 @@ file.md.html will be created in the same directory as file.md.  Old file.md.xml 
 warning!
 </code></pre><p>To preview file in browser, and save a copy of preview html every time &#39;file.md&#39; changes:</p>
 <pre><code>mtoc -v -s file.md
+</code></pre><p>To preview in browser using W3C working-draft style:</p>
+<pre><code>mtoc -v file.md --css http://www.w3.org/StyleSheets/TR/W3C-WD.css
 </code></pre>
 </body>
 </html>
