@@ -1,3 +1,5 @@
+# override 'marked' for TOC
+
 marked = require('marked')
 pluginCompiler = require('./pluginCompiler')
 tocCompiler = require('./tocCompiler')
@@ -30,7 +32,6 @@ tokens: returned by marked.Lexer.lex()
 returns:  tokens with [TOC] paragraph replaced and filled in with toc lists
 ###
 replaceToc = (tokens)->
-
   pluginCompiler(tokens, {
     'TOC' : tocCompiler
   })

@@ -1,4 +1,5 @@
 
+# The TableOfContent generator, as a plugin for pluginCompiler
 module.exports = (param, iToc, tokens)->
   addSection = (param == ".")
 

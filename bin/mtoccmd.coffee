@@ -15,6 +15,7 @@ Example:
   """)
   .boolean("s")
   .boolean("v")
+  .boolean("x")
   .string('p')
   .string("css")
   .default('p', '3333')
@@ -22,6 +23,7 @@ Example:
   .describe('v', 'Preview markdown as html in browser, in realtime')
   .describe("p", 'The port to listen on when in preview mode')
   .describe("css", "The optional url of css to use for html preview")
+  .describe("x", "output to stdout as xml spec")
 ;
 
 fs = require("fs")
@@ -39,12 +41,27 @@ outFile = mdFile + ".html"
 if o.argv.css
   preview.css = o.argv.css
 
+
 if o.argv.v # preview
   preview.startServer(mdFile, parseInt(o.argv.p), outFile if o.argv.s)
 else if o.argv.s
   preview.save(mdFile, outFile)
   console.log "Written to #{outFile}"
+else if o.argv.x
+  # dump ExPath xmlspec
+  XmlspecRenderer = require("../lib/XmlspecRenderer")
+  xmlSpecRender = new XmlspecRenderer()
+  marked.setOptions({
+    renderer : xmlSpecRender
+  })
+  output = marked(fs.readFileSync(mdFile, 'utf-8'))
+  output += xmlSpecRender.closeHeading()
+
+  beautifier = require("../lib/vkbeautify")
+  console.log beautifier.xml(output, 2)
+
 else
+  # dump html
   console.log marked(fs.readFileSync(mdFile, 'utf-8'))
 
 ###
