@@ -25,21 +25,23 @@
         css || (css = 'default');
         http = require('http');
         return http.createServer(function(req, res) {
-          var content, mjp, query;
+          var content, f, mjp, query;
           if (preview._exitFuture) {
             preview._exitFuture.cancel();
           }
           query = url.parse(req.url).query;
           mjp = /jsonp=([_\w\.]+)/.exec(query);
           if (mjp) {
-            preview._pusher = {
-              req: req,
-              res: res,
-              f: mjp[1],
-              ts: Date.now()
-            };
+            f = mjp[1];
             return preview._pollFuture = future.once(1000, function() {
-              return preview.push(false);
+              res.writeHead(200, {
+                'Content-Type': 'text/javascript'
+              });
+              res.end("" + f + "(" + preview._pollPushResult + ")");
+              return preview._exitFuture = future.once(500, function() {
+                console.log("Browser closed, exit.");
+                return process.exit(0);
+              });
             });
           } else {
             res.writeHead(200, {
@@ -56,7 +58,9 @@
           onChange = (function(_this) {
             return function() {
               console.log("" + filename + " changed");
-              preview.push(true);
+              preview._pollPushResult = true;
+              preview._pollFuture.finish();
+              preview._pollPushResult = false;
               return fs.watch(filename, onChange);
             };
           })(this);
@@ -65,25 +69,9 @@
         });
       });
     },
-    _pusher: void 0,
+    _pollPushResult: false,
     _pollFuture: void 0,
     _exitFuture: void 0,
-    push: function(changed) {
-      var f, req, res, ts, _ref;
-      if (preview._pusher) {
-        _ref = preview._pusher, req = _ref.req, res = _ref.res, f = _ref.f, ts = _ref.ts;
-        res.writeHead(200, {
-          'Content-Type': 'text/javascript'
-        });
-        res.end("" + f + "(" + changed + ")");
-        preview._pusher = null;
-        preview._exitFuture = future.once(500, function() {
-          console.log("Browser closed, exit.");
-          return process.exit(0);
-        });
-        return preview._pollFuture.cancel();
-      }
-    },
     render: function(inFile, css) {
       var style;
       if (/:\/\//.test(css)) {

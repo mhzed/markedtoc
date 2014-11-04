@@ -20,8 +20,11 @@ module.exports = preview = {
         query = url.parse(req.url).query
         mjp = /jsonp=([_\w\.]+)/.exec query
         if mjp
-          preview._pusher = {req, res, f: mjp[1], ts: Date.now()}
-          preview._pollFuture = future.once 1000, ()->preview.push(false)  # poll return after 1 sec
+          f = mjp[1]
+          preview._pollFuture = future.once 1000, ()->
+            res.writeHead(200, {'Content-Type': 'text/javascript'});
+            res.end "#{f}(#{preview._pollPushResult})"
+            preview._exitFuture = future.once 500, ()-> console.log "Browser closed, exit."; process.exit(0)  # exit if no poll within 500ms
         else
           res.writeHead(200, {'Content-Type': 'text/html'});
           content = preview.render(filename, css)
@@ -31,25 +34,19 @@ module.exports = preview = {
 
         onChange = ()=>
           console.log "#{filename} changed"
-          preview.push(true)  # poll reply immediately
+          preview._pollPushResult = true
+          preview._pollFuture.finish()
+          preview._pollPushResult = false
           fs.watch filename, onChange
+
         fs.watch filename, onChange
 
         open("http://127.0.0.1:#{port}")
       ) # end listen
 
-  _pusher    : undefined
+  _pollPushResult : false
   _pollFuture : undefined
   _exitFuture : undefined
-
-  push : (changed)->  # tell browser if file changed or not
-    if preview._pusher
-      {req, res, f, ts} = preview._pusher
-      res.writeHead(200, {'Content-Type': 'text/javascript'});
-      res.end "#{f}(#{changed})"
-      preview._pusher = null
-      preview._exitFuture = future.once 500, ()-> console.log "Browser closed, exit."; process.exit(0)  # exit if no poll within 500ms
-      preview._pollFuture.cancel()
 
 
 # inFile : path to input markdown file
