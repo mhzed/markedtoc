@@ -6,6 +6,8 @@ marked = require("./../lib/marked")
 url    = require("url")
 net     = require('net')
 findport = require("find-free-port")
+future   = require("phuture")
+
 
 module.exports = preview = {
 
@@ -14,12 +16,12 @@ module.exports = preview = {
       css ||= 'default'
       http = require('http');
       http.createServer((req, res)->
-        preview.clearCb 'exit'
+        if preview._exitFuture then preview._exitFuture.cancel()
         query = url.parse(req.url).query
         mjp = /jsonp=([_\w\.]+)/.exec query
         if mjp
           preview._pusher = {req, res, f: mjp[1], ts: Date.now()}
-          preview.queueCb 'poll', 1000,  ()->preview.push(false)  # poll return after 1 sec
+          preview._pollFuture = future.once 1000, ()->preview.push(false)  # poll return after 1 sec
         else
           res.writeHead(200, {'Content-Type': 'text/html'});
           content = preview.render(filename, css)
@@ -36,14 +38,9 @@ module.exports = preview = {
         open("http://127.0.0.1:#{port}")
       ) # end listen
 
-  _pusher : undefined
-
-  queueCb : (name, delayMs, cb) ->
-    name = '_'+name
-    @[name] = setTimeout cb, delayMs
-  clearCb : (name) ->
-    name = '_'+name
-    if @[name] then clearTimeout(@[name]); @[name] = null
+  _pusher    : undefined
+  _pollFuture : undefined
+  _exitFuture : undefined
 
   push : (changed)->  # tell browser if file changed or not
     if preview._pusher
@@ -51,8 +48,9 @@ module.exports = preview = {
       res.writeHead(200, {'Content-Type': 'text/javascript'});
       res.end "#{f}(#{changed})"
       preview._pusher = null
-      preview.queueCb 'exit', 500, ()-> console.log "Browser closed, exit."; process.exit(0)  # exit if no poll within 500ms
-      preview.clearCb 'poll'
+      preview._exitFuture = future.once 500, ()-> console.log "Browser closed, exit."; process.exit(0)  # exit if no poll within 500ms
+      preview._pollFuture.cancel()
+
 
 # inFile : path to input markdown file
   # css: the css, could be url, or local path (embed style)
