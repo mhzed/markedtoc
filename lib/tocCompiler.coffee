@@ -1,7 +1,7 @@
 
 # The TableOfContent generator, as a plugin for pluginCompiler
 module.exports = (param, iToc, tokens)->
-  addSection = (param == ".")
+  addSection = ('numbered' of param)
 
   tocTokens = []
   root = [];
@@ -32,7 +32,8 @@ module.exports = (param, iToc, tokens)->
   makeToc = (stack, toc, levelStacks) ->
     toc.push({
       type: 'list_start',
-      ordered: 'toc'
+      ordered: false,
+      id: 'toc'
     })
 
     x = 0
@@ -40,6 +41,7 @@ module.exports = (param, iToc, tokens)->
       item = stack[x]
       if (item instanceof Array)
         makeToc(item, toc, levelStacks.concat(1));
+        levelStacks[levelStacks.length-1]++
       else
         tocId = levelStacks.join(".");
         label = item.text
@@ -64,8 +66,8 @@ module.exports = (param, iToc, tokens)->
 
         toc.push( { type: 'list_item_end' })
         levelStacks[levelStacks.length-1]++
-        x++
-    # end whiel
+      x++
+    # end while
     toc.push( {type: 'list_end'} )
   # end makeToc
 

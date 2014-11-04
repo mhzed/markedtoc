@@ -7,7 +7,7 @@
 # - <back> xml may end document
 #
 
-marked = require('marked')
+marked = require('./../lib/marked')
 
 escapeXml = (xml, encode)->
   rex = if !encode then /&(?!#?\w+;)/g else /&/g
@@ -17,15 +17,6 @@ escapeXml = (xml, encode)->
     replace(/"/g, '&quot;').\
     replace(/'/g, '&#39;');
 
-# unordered : <ulist><item>
-# ordered : <ol><li>
-# so need hook to mark list type to output <item>|<li> depending on surrounding list
-oldtok = marked.Parser.prototype.tok
-marked.Parser.prototype.tok = ()->
-  switch this.token.type
-    when 'list_start' then this.renderer.markListStart(this.token.ordered)
-  oldtok.call(this)
-
 
 class XmlspecRenderer extends marked.Renderer
 
@@ -34,6 +25,12 @@ class XmlspecRenderer extends marked.Renderer
     @bodyState = "none"   # none | begun | end
     super(options)
     @options.xhtml = true
+    @list_ordered = []
+
+  enterToken : (token)->
+    switch token.type
+      when 'list_start' then @list_ordered.push token.ordered
+      when 'list_end' then @list_ordered.pop()
 
   code : (code, lang, escaped)->
     "<eg>\n#{if escaped then code else escapeXml(code)}\n</eg>"
@@ -76,8 +73,6 @@ class XmlspecRenderer extends marked.Renderer
     if nextLevel then @sectionStack.push [nextLevel, nextId]
     return ret
 
-  markListStart : (@ordered)->
-
   list : (body, ordered)->
     if ordered
       "<ol type='a'>#{body}</ol>"
@@ -85,7 +80,7 @@ class XmlspecRenderer extends marked.Renderer
       "<ulist>#{body}</ulist>"
 
   listitem : (text)->
-    if @ordered then super(text)
+    if @list_ordered[-1..][0] then super(text)
     else "<item>#{text}</item>"
 
   paragraph : (text)->

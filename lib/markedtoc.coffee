@@ -1,38 +1,19 @@
-# override 'marked' for TOC
+marked = require('./marked')
 
-marked = require('marked')
-pluginCompiler = require('./pluginCompiler')
-tocCompiler = require('./tocCompiler')
-module.exports = marked
+marked.pluginCompiler = require("./pluginCompiler");
+marked.tocCompiler = require("./tocCompiler");
+marked.ReactRenderer = require("./ReactRenderer");
 
 # override lexer to do toc
 do ->
   oldLexer = marked.lexer
   newLexer = (data, options)->
     toks = oldLexer(data, options)
-    return replaceToc(toks)
+    return marked.pluginCompiler(toks, {
+      'TOC' : marked.tocCompiler
+    })
   marked.Lexer.lex = newLexer
   marked.lexer = newLexer
 
-# override renderer to set id toc for toc list
-do ->
-  renderer = new marked.Renderer();
-  renderer.list = (body, ordered) ->
-    if ordered=='toc'
-      "<ul id='toc'>#{body}</ul>"
-    else
-      type =  if ordered then 'ol' else 'ul'
-      '<' + type + '>\n' + body + '</' + type + '>\n';
-  marked.setOptions({
-    renderer : renderer
-  })
 
-###
-tokens: returned by marked.Lexer.lex()
-returns:  tokens with [TOC] paragraph replaced and filled in with toc lists
-###
-replaceToc = (tokens)->
-  pluginCompiler(tokens, {
-    'TOC' : tocCompiler
-  })
-
+module.exports = marked

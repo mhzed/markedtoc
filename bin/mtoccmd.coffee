@@ -3,8 +3,8 @@ o = require('optimist')
   .usage("""
 
 Markdown to html generator with TOC support.
-- Insert paragraph "[TOC]" in the markdown file to generate table of content in the html output.
-- Insert paragraph "[TOC.]" in the markdown file to generate table of content with numbered section prefix.
+- Insert paragraph "<TOC/>" in the markdown file to generate table of content in the html output.
+- Insert paragraph "<TOC numbered/>" in the markdown file to generate table of content with numbered section prefix.
 
 Example:
   # print clean html to stdout
@@ -16,6 +16,7 @@ Example:
   .boolean("s")
   .boolean("v")
   .boolean("x")
+  .boolean("l")
   .string('p')
   .string("css")
   .default('p', '3333')
@@ -24,12 +25,13 @@ Example:
   .describe("p", 'The port to listen on when in preview mode')
   .describe("css", "The optional url of css to use for html preview")
   .describe("x", "output to stdout as xml spec")
+  .describe("l", "output lexer output to stdout")
 ;
 
 fs = require("fs")
 marked = require("../lib/markedtoc")
 path = require("path")
-preview = require("../lib/preview")
+preview = require("./preview")
 mdFile = o.argv._[0]
 
 if (o.argv._.length != 1)
@@ -38,18 +40,14 @@ if (o.argv._.length != 1)
 
 outFile = mdFile + ".html"
 
-if o.argv.css
-  preview.css = o.argv.css
-
-
 if o.argv.v # preview
-  preview.startServer(mdFile, parseInt(o.argv.p), outFile if o.argv.s)
+  preview.startServer(mdFile, o.argv.css, parseInt(o.argv.p), outFile if o.argv.s)
 else if o.argv.s
-  preview.save(mdFile, outFile)
+  preview.save(mdFile, o.argv.css, outFile)
   console.log "Written to #{outFile}"
 else if o.argv.x
   # dump ExPath xmlspec
-  XmlspecRenderer = require("../lib/XmlspecRenderer")
+  XmlspecRenderer = require("./XmlspecRenderer")
   xmlSpecRender = new XmlspecRenderer()
   marked.setOptions({
     renderer : xmlSpecRender
@@ -57,9 +55,11 @@ else if o.argv.x
   output = marked(fs.readFileSync(mdFile, 'utf-8'))
   output += xmlSpecRender.closeHeading()
 
-  beautifier = require("../lib/vkbeautify")
+  beautifier = require("./vkbeautify")
   console.log beautifier.xml(output, 2)
 
+else if o.argv.l
+  console.log JSON.stringify(marked.lexer(fs.readFileSync(mdFile, 'utf-8')), null, 2)
 else
   # dump html
   console.log marked(fs.readFileSync(mdFile, 'utf-8'))
