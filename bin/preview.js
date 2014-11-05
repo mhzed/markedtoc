@@ -33,11 +33,14 @@
           mjp = /jsonp=([_\w\.]+)/.exec(query);
           if (mjp) {
             f = mjp[1];
-            return preview._pollFuture = future.once(1000, function() {
+            return preview._pushFuture = future.once(1000, function(changed) {
+              if (changed == null) {
+                changed = false;
+              }
               res.writeHead(200, {
                 'Content-Type': 'text/javascript'
               });
-              res.end("" + f + "(" + preview._pollPushResult + ")");
+              res.end("" + f + "(" + changed + ")");
               return preview._exitFuture = future.once(500, function() {
                 console.log("Browser closed, exit.");
                 return process.exit(0);
@@ -58,9 +61,7 @@
           onChange = (function(_this) {
             return function() {
               console.log("" + filename + " changed");
-              preview._pollPushResult = true;
-              preview._pollFuture.finish();
-              preview._pollPushResult = false;
+              preview._pushFuture.finish(true);
               return fs.watch(filename, onChange);
             };
           })(this);
@@ -69,8 +70,7 @@
         });
       });
     },
-    _pollPushResult: false,
-    _pollFuture: void 0,
+    _pushFuture: void 0,
     _exitFuture: void 0,
     render: function(inFile, css) {
       var style;

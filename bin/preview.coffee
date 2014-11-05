@@ -21,9 +21,10 @@ module.exports = preview = {
         mjp = /jsonp=([_\w\.]+)/.exec query
         if mjp
           f = mjp[1]
-          preview._pollFuture = future.once 1000, ()->
+          preview._pushFuture = future.once 1000, (changed)->
+            changed ?= false
             res.writeHead(200, {'Content-Type': 'text/javascript'});
-            res.end "#{f}(#{preview._pollPushResult})"
+            res.end "#{f}(#{changed})"
             preview._exitFuture = future.once 500, ()-> console.log "Browser closed, exit."; process.exit(0)  # exit if no poll within 500ms
         else
           res.writeHead(200, {'Content-Type': 'text/html'});
@@ -34,9 +35,7 @@ module.exports = preview = {
 
         onChange = ()=>
           console.log "#{filename} changed"
-          preview._pollPushResult = true
-          preview._pollFuture.finish()
-          preview._pollPushResult = false
+          preview._pushFuture.finish(true)
           fs.watch filename, onChange
 
         fs.watch filename, onChange
@@ -44,12 +43,10 @@ module.exports = preview = {
         open("http://127.0.0.1:#{port}")
       ) # end listen
 
-  _pollPushResult : false
-  _pollFuture : undefined
+  _pushFuture : undefined
   _exitFuture : undefined
 
-
-# inFile : path to input markdown file
+  # inFile : path to input markdown file
   # css: the css, could be url, or local path (embed style)
   render : (inFile, css)->
     if (/:\/\//.test(css))  # url
