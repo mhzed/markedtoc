@@ -6,9 +6,7 @@
 
 marked = require "./marked"
 
-marked.ifHtmlEscape = false
-
-module.exports = class ReactRenderer
+module.exports = class ReactRenderer extends marked.Renderer
 
   # caller needs to supply React.DOM as @R, whose source maybe different depending on environment
   constructor: (@options, @R)->
@@ -58,38 +56,42 @@ module.exports = class ReactRenderer
   html : (html)->
     return @R.div(@_prop({dangerouslySetInnerHTML:{__html:html}}));
 
-  heading : (text, level, raw)->
+  heading : (inlineBody, level, raw)->
     return @R['h' + level] (@_prop({
-      children:text,
+      dangerouslySetInnerHTML:{__html:inlineBody}
       id:@options.headerPrefix + raw.toLowerCase().replace(/[^\w]+/g, '-'),
     }));
 
-  hr : () ->
-    return @R.hr(@_prop());
-
-  list : (body, ordered, id)->
+  list : (items, ordered, id)->
     type = if ordered then 'ol' else 'ul';
-    @R[type](@_prop({children:body, id}));
+    return @R[type](@_prop({
+      children: items
+      id
+    }));
 
-  listitem : (text)->
-    return @R.li(@_prop({children:text}))
+  listitem : (body)->
+    # React wraps text inside <span>, to avoid it, we preempt by wrap in div first
+    for e,i in body when typeof e == 'string'
+      body[i] = @R.div {dangerouslySetInnerHTML:{__html:e}}
+    return @R.li(@_prop({
+      children: body
+    }))
 
-  paragraph : (text) ->
-    return @R.p(@_prop(),text);
+  paragraph : (inlineBody) ->
+    return @R.p(@_prop({
+      dangerouslySetInnerHTML:{__html:inlineBody}
+    }));
 
-  table : (header, body) ->
+  table : (header, rows) ->
     return @R.table(@_prop(),
-        @R.thead(@_prop({children:header})),
-        @R.tbody(@_prop({children:body}))
+        @R.thead(@_prop({children: header})),
+        @R.tbody(@_prop({children: rows}))
     );
 
-  tablerow : (content)->
-    return @R.tr(@_prop({children:content}))
-
-  tablecell : (content, flags)->
+  tablecell : (inlineBody, flags)->
     type = if flags.header then 'th' else 'td';
     props = @_prop({
-      children:content
+      dangerouslySetInnerHTML:{__html:inlineBody}
       style: {}
     })
     if flags.align
@@ -97,37 +99,24 @@ module.exports = class ReactRenderer
 
     return @R[type](props);
 
+  tablerow : (cells)->
+    return @R.tr(@_prop({children:cells}))
 
+  hr : () ->
+    return @R.hr(@_prop());
+
+  ### inline render, leave default implementation
   strong : (text)->
-    return @R.strong( @_prop() ,text);
-
+    return '<strong>' + text + '</strong>';
   em : (text) ->
-    return @R.em( @_prop(),text);
-
+    return '<em>' + text + '</em>';
   codespan : (text)->
-    return @R.code( @_prop(), text);
-
+    return '<code>' + text + '</code>';
   br : ()->
-    return @R.br( @_prop() );
-
+    return '<br/>'
   del : (text)->
-    return @R.del( @_prop(), text);
-
+    return '<del>' + text + '</del>';
   link : (href, title, text) ->
-    if (@options.sanitize)
-      try
-        prot = decodeURIComponent(unescape(href))
-        .replace(/[^\w:]/g, '')
-        .toLowerCase();
-      catch e
-        return @R.a( @_prop() );
-
-      if (prot.indexOf('javascript:') == 0)
-        return @R.a( @_prop() );
-
-    return @R.a( @_prop({href:href,title:title}),text);
-
   image : (href, title, text)->
-    return @R.img( @_prop({src:href,title:title,alt:text}));
-
+  ###
 
