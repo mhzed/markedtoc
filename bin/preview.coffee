@@ -7,7 +7,7 @@ url    = require("url")
 net     = require('net')
 findport = require("find-free-port")
 future   = require("phuture")
-
+mime = require('mime-types')
 
 module.exports = preview = {
 
@@ -17,22 +17,35 @@ module.exports = preview = {
       http = require('http');
       http.createServer((req, res)->
         if preview._exitFuture then preview._exitFuture.cancel()
-        query = url.parse(req.url).query
-        mjp = /jsonp=([_\w\.]+)/.exec query
-        if mjp
+        ourl = url.parse(req.url)
+
+        mjp = /jsonp=([_\w\.]+)/.exec ourl.query
+
+        if mjp  # jsonp poll
           f = mjp[1]
           preview._pushFuture = future.once 1000, (changed)->
             changed ?= false
             res.writeHead(200, {'Content-Type': 'text/javascript'});
             res.end "#{f}(#{changed})"
-            preview._exitFuture = future.once 500, ()-> console.log "Browser closed, exit."; process.exit(0)  # exit if no poll within 500ms
-        else
+            preview._exitFuture = future.once 1000, ()-> console.log "Browser closed, exit."; process.exit(0)  # exit if no poll within 500ms
+
+        else if ourl.pathname == "/"
           res.writeHead(200, {'Content-Type': 'text/html'});
           content = preview.render(filename, css)
           if saveOnChangeFile then fs.writeFileSync(saveOnChangeFile, content)
           res.end content
-      ).listen(port, '127.0.0.1', ()->
+        else
+          lfp = path.resolve(filename, ".."+ourl.pathname)
+          if fs.existsSync(lfp)
+            ctype = mime.lookup(path.extname(lfp)) || "applicaiton/octet-stream"
+            res.writeHead(200, {'Content-Type': ctype});
+            fs.createReadStream(lfp).pipe(res);
+          else
+            res.writeHead(404, {});
+            res.end()
 
+
+      ).listen(port, '127.0.0.1', ()->
         onChange = ()=>
           console.log "#{filename} changed"
           preview._pushFuture.finish(true)
@@ -51,10 +64,16 @@ module.exports = preview = {
   render : (inFile, css)->
     if (/:\/\//.test(css))  # url
       style = '<link rel="stylesheet" type="text/css" href="' + css + '">';
+    else if fs.existsSync(path.resolve(css))
+      style = """
+      <style>
+      #{fs.readFileSync(path.resolve(css))}
+      </style>
+      """
     else
       style = """
       <style>
-      #{fs.readFileSync(path.resolve(__dirname, '../theme/' + css + '.css'), 'utf-8')}
+      #{require('../theme/default_css')}
       </style>
       """
     """

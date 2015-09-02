@@ -1,5 +1,5 @@
-
 o = require('optimist')
+argv = o
   .usage("""
 
 Markdown to html generator with TOC support.
@@ -26,26 +26,27 @@ Example:
   .describe("css", "The optional url of css to use for html preview")
   .describe("x", "output to stdout as xml spec")
   .describe("l", "output lexer output to stdout")
+  .argv
 ;
 
 fs = require("fs")
 marked = require("../lib/markedtoc")
 path = require("path")
 preview = require("./preview")
-mdFile = o.argv._[0]
+mdFile = argv._[0]
 
-if (o.argv._.length != 1)
+if (argv._.length != 1)
   console.log o.help()
   process.exit 0
 
 outFile = mdFile + ".html"
 
-if o.argv.v # preview
-  preview.startServer(mdFile, o.argv.css, parseInt(o.argv.p), outFile if o.argv.s)
-else if o.argv.s
-  preview.save(mdFile, o.argv.css, outFile)
+if argv.v # preview
+  preview.startServer(mdFile, argv.css, parseInt(argv.p), outFile if argv.s)
+else if argv.s
+  preview.save(mdFile, argv.css, outFile)
   console.log "Written to #{outFile}"
-else if o.argv.x
+else if argv.x
   # dump ExPath xmlspec
   XmlspecRenderer = require("./XmlspecRenderer")
   xmlSpecRender = new XmlspecRenderer()
@@ -58,7 +59,7 @@ else if o.argv.x
   beautifier = require("./vkbeautify")
   console.log beautifier.xml(output, 2)
 
-else if o.argv.l
+else if argv.l
   console.log JSON.stringify(marked.lexer(fs.readFileSync(mdFile, 'utf-8')), null, 2)
 else
   # dump html

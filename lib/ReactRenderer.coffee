@@ -2,6 +2,11 @@
   marked.setOptions({   # override default options
     renderer : new marked.ReactRenderer(marked.options.renderer)
   })
+
+  TODO:
+  https://github.com/jmcmanus/pagedown-extra
+  add support for definition list
+  add support for in-page jump link
 ###
 
 marked = require "./marked"
