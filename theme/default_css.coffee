@@ -7,8 +7,8 @@ h1,h2,h3,h4,h5,h6,p,blockquote {
 }
 body {
     font-family: "Helvetica Neue", Helvetica, "Hiragino Sans GB", Arial, sans-serif;
-    font-size: 13px;
-    line-height: 18px;
+    font-size: 14px;
+    line-height: 20px;
     color: #333333;
     background-color: white;
     margin: 10px 13px 10px 13px;
@@ -35,8 +35,8 @@ a img {
     border: none;
 }
 p {
-    margin-top: 4px;
-    margin-bottom: 4px;
+    margin-top: 10px;
+    margin-bottom: 5px;
 }
 h1,h2,h3,h4,h5,h6 {
     color: #404040;

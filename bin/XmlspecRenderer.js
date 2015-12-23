@@ -17,7 +17,6 @@
 
     function XmlspecRenderer(options) {
       this.sectionStack = [];
-      this.bodyState = "none";
       XmlspecRenderer.__super__.constructor.call(this, options);
       this.options.xhtml = true;
       this.list_ordered = [];
@@ -33,38 +32,34 @@
     };
 
     XmlspecRenderer.prototype.code = function(code, lang, escaped) {
-      return "<eg>\n" + (escaped ? code : escapeXml(code)) + "\n</eg>";
-    };
-
-    XmlspecRenderer.prototype._headingXml = function(level, text, id) {
-      var ret;
-      if (level === 1) {
-        return "<spec>";
+      if (lang === "inline-md") {
+        return "<eg>\n" + (marked.inlineLexer(code, '.')) + "\n</eg>";
       } else {
-        ret = "";
-        if (this.bodyState === "none") {
-          ret = "<body>";
-          this.bodyState = "begun";
-        }
-        ret += "<div" + (level - 1) + " id='" + id + "'><head>" + text + "</head>";
-        return ret;
+        return "<eg>\n" + (escaped ? code : escapeXml(code)) + "\n</eg>";
       }
     };
 
     XmlspecRenderer.prototype.heading = function(text, level, raw) {
       var id, ret;
       id = raw.toLowerCase().replace(/[^\w]+/g, '-');
-      ret = this.closeHeading(level, id);
-      ret += this._headingXml(level, text, id);
-      return ret;
+      ret = "";
+      if (this.sectionStack.length === 0) {
+        ret += this._nextHeading(0, "_spec", "_spec");
+      }
+      if (level === 1 && this.sectionStack.length === 1) {
+        return ret;
+      } else {
+        if (level >= 2 && this.sectionStack.length === 1) {
+          ret += this._nextHeading(1, "body", "body");
+        }
+        ret += this._nextHeading(level, text, id);
+        return ret;
+      }
     };
 
-    XmlspecRenderer.prototype.closeHeading = function(nextLevel, nextId) {
-      var lastId, lastLevel, lastlevel, level, ret, secs;
+    XmlspecRenderer.prototype._nextHeading = function(level, text, id) {
+      var lastId, lastLevel, lastid, lastlevel, ret, secs, _html, _i, _len, _level, _ref, _ref1, _sec;
       ret = "";
-      if (nextLevel === void 0) {
-        nextLevel = 0;
-      }
       if (this.sectionStack.length > 0) {
         secs = (function() {
           var _i, _len, _ref, _ref1, _results;
@@ -72,7 +67,7 @@
           _results = [];
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             _ref1 = _ref[_i], lastLevel = _ref1[0], lastId = _ref1[1];
-            if (lastLevel >= nextLevel) {
+            if (lastLevel >= level) {
               _results.push([lastLevel, lastId]);
             }
           }
@@ -80,43 +75,80 @@
         }).call(this);
         if (secs.length > 0) {
           ret = ((function() {
-            var _i, _len, _ref, _results;
-            _ref = secs.slice(0, -1);
+            var _i, _len, _results;
             _results = [];
-            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-              level = _ref[_i][0];
-              _results.push("</div" + (level - 1) + ">");
+            for (_i = 0, _len = secs.length; _i < _len; _i++) {
+              _level = secs[_i][0];
+              if (_level > 1) {
+                _results.push("</div" + (_level - 1) + ">\n");
+              }
             }
             return _results;
           })()).join("");
-          lastlevel = secs[secs.length - 1][0];
-          if (lastlevel === 1) {
-            ret += (this.bodyState === "end" ? '</spec>' : '</body></spec>');
-          } else {
-            ret += "</div" + (lastlevel - 1) + ">";
+          _ref = (function() {
+            var _j, _len, _results;
+            _results = [];
+            for (_j = 0, _len = secs.length; _j < _len; _j++) {
+              _sec = secs[_j];
+              if (_level <= 1) {
+                _results.push(_sec);
+              }
+            }
+            return _results;
+          })();
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            _ref1 = _ref[_i], lastlevel = _ref1[0], lastid = _ref1[1];
+            if (lastlevel === 1) {
+              if (lastid === "back") {
+                ret += "</back>";
+              } else {
+                ret += "</body>";
+              }
+            } else if (lastlevel === 0) {
+              ret += "</spec>";
+            }
           }
           this.sectionStack = this.sectionStack.slice(0, -secs.length);
         }
       }
-      if (nextLevel) {
-        this.sectionStack.push([nextLevel, nextId]);
-      }
-      return ret;
+      this.sectionStack.push([level, id]);
+      _html = (function(_this) {
+        return function() {
+          if (level < 0) {
+            return "";
+          } else if (level === 0) {
+            return "<spec>";
+          } else if (level === 1) {
+            if (/^\s*back\s*$/i.test(text)) {
+              return "<back>";
+            } else {
+              return "<body>";
+            }
+          } else {
+            return "<div" + (level - 1) + " id='" + id + "'>\n<head>" + text + "</head>\n";
+          }
+        };
+      })(this)();
+      return ret + _html;
+    };
+
+    XmlspecRenderer.prototype.closeDoc = function() {
+      return this._nextHeading(-1, "", "");
     };
 
     XmlspecRenderer.prototype.list = function(body, ordered) {
       if (ordered) {
-        return "<ol type='a'>" + body + "</ol>";
+        return "<olist>" + body + "</olist>\n";
       } else {
-        return "<ulist>" + body + "</ulist>";
+        return "<ulist>" + body + "</ulist>\n";
       }
     };
 
     XmlspecRenderer.prototype.listitem = function(text) {
-      if (this.list_ordered.slice(-1)[0]) {
-        return XmlspecRenderer.__super__.listitem.call(this, text);
-      } else {
+      if (/^\s*</.test(text)) {
         return "<item>" + text + "</item>";
+      } else {
+        return "<item><p>" + text + "</p></item>";
       }
     };
 
@@ -125,19 +157,23 @@
     };
 
     XmlspecRenderer.prototype.html = function(html) {
-      var ret;
-      ret = "";
-      if (/<back>/.test(html)) {
-        ret += this.closeHeading(2, "back");
-        ret += "</body>";
-        this.bodyState = "end";
-        this.sectionStack.pop();
-      }
-      return ret + XmlspecRenderer.__super__.html.call(this, html);
+      return XmlspecRenderer.__super__.html.call(this, html);
     };
 
     XmlspecRenderer.prototype.blockquote = function(quote) {
       return "<quote>" + quote + "</quote>";
+    };
+
+    XmlspecRenderer.prototype.strong = function(text) {
+      return "<rfc2119>" + text + "</rfc2119>";
+    };
+
+    XmlspecRenderer.prototype.em = function(text) {
+      return "<emph>" + text + "</emph>";
+    };
+
+    XmlspecRenderer.prototype.link = function(href, title, text) {
+      return "<loc href=\"" + href + "\">" + text + "</loc>";
     };
 
     return XmlspecRenderer;

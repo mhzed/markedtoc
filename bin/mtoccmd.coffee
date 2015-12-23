@@ -54,10 +54,11 @@ else if argv.x
     renderer : xmlSpecRender
   })
   output = marked(fs.readFileSync(mdFile, 'utf-8'))
-  output += xmlSpecRender.closeHeading()
-
-  beautifier = require("./vkbeautify")
-  console.log beautifier.xml(output, 2)
+  output += xmlSpecRender.closeDoc()
+  console.log output
+  # xml can't be beautified, as code block content may be changed.
+  #beautifier = require("./vkbeautify")
+  #console.log beautifier.xml(output, 2)
 
 else if argv.l
   console.log JSON.stringify(marked.lexer(fs.readFileSync(mdFile, 'utf-8')), null, 2)

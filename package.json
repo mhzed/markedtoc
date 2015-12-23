@@ -1,6 +1,6 @@
 {
   "name": "markedtoc",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Marked down parser with table of content, live preview, React.js render support",
   "main": "index.js",
   "scripts": {
